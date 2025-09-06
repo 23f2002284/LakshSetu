@@ -255,17 +255,13 @@ class TrendSkillExtract(BaseModel):
     meta: Optional[ExtractionMeta] = None
 
 
-class CareerRecommendation(BaseModel):
+class CareerActionRecommendation(BaseModel):
     title: str
+    description: str
     reason: Optional[str] = None
     priority: int = Field(default=3, ge=1, le=5, description="1=highest priority, 5=lowest")
     suggested_actions: List[str] = Field(default_factory=list)
-
-
-class TrendProfile(BaseModel):
-
-
-
-
+    approval_status: Optional[str] = Field(default=None, description="e.g., 'Pending', 'Approved', 'Rejected'")
+    meta: Optional[List[ExtractionMeta]] = None
 
 
