@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -6,20 +7,26 @@ import { Button } from "@/components/ui/button"
 import { LogOut, FileText, MapPin, Mail, Phone, Download, Edit, Printer } from "lucide-react"
 
 interface UserProfile {
-  firstName: string
-  lastName: string
+  user_id?: number
+  name: string
   email: string
-  currentRole: string
-  company: string
-  experienceLevel: string
-  skills: string[]
-  bio: string
-  careerGoals: string[]
-  timeframe: string
-  priorities: string
+  age?: number
+  location?: string
+  bio?: string
+  github?: string
+  linkedin?: string
+  huggingface?: string
+  x?: string
+  website?: string
+  skills?: string[]
+  certifications?: string[]
+  projects?: any[]
+  blogs?: any[]
+  achievements?: string[]
+  profile_completeness?: number
 }
 
-export default function DashboardPage() {
+export  default function DashboardPage() {
   const router = useRouter()
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
@@ -31,12 +38,39 @@ export default function DashboardPage() {
       return
     }
 
-    setUserProfile(JSON.parse(storedProfile))
+    try {
+      const profile = JSON.parse(storedProfile)
+      console.log("Loaded profile:", profile) // Debug log
+      setUserProfile(profile)
+    } catch (error) {
+      console.error("Error parsing stored profile:", error)
+      router.push("/register")
+    }
   }, [router])
 
   const handleLogout = () => {
     localStorage.removeItem("userProfile")
     router.push("/")
+  }
+
+  // Helper function to split name
+  const getFirstName = (fullName: string) => {
+    return fullName ? fullName.split(' ')[0] : 'User'
+  }
+
+  const getLastName = (fullName: string) => {
+    const parts = fullName ? fullName.split(' ') : []
+    return parts.length > 1 ? parts.slice(1).join(' ') : ''
+  }
+
+  // Helper function to determine experience level
+  const getExperienceLevel = (profile: UserProfile) => {
+    const skillsCount = profile.skills?.length || 0
+    const projectsCount = profile.projects?.length || 0
+    
+    if (skillsCount >= 8 && projectsCount >= 5) return 'senior level'
+    if (skillsCount >= 5 && projectsCount >= 3) return 'mid level'
+    return 'entry level'
   }
 
   if (!userProfile) {
@@ -49,6 +83,10 @@ export default function DashboardPage() {
       </div>
     )
   }
+
+  const firstName = getFirstName(userProfile.name)
+  const lastName = getLastName(userProfile.name)
+  const experienceLevel = getExperienceLevel(userProfile)
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -115,22 +153,27 @@ export default function DashboardPage() {
               className="text-5xl font-bold text-slate-900 mb-3 tracking-tight"
               style={{ fontFamily: "Georgia, serif" }}
             >
-              {userProfile.firstName} {userProfile.lastName}
+              {firstName} {lastName}
             </h1>
-            <h2 className="text-2xl text-slate-700 font-normal mb-6 italic">{userProfile.currentRole}</h2>
+            <h2 className="text-2xl text-slate-700 font-normal mb-6 italic">
+              {experienceLevel.charAt(0).toUpperCase() + experienceLevel.slice(1)} Developer
+            </h2>
             <div className="flex flex-wrap justify-center gap-8 text-slate-600">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
                 <span>{userProfile.email}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                <span>+1 (555) 123-4567</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                <span>San Francisco, CA</span>
-              </div>
+              {userProfile.age && (
+                <div className="flex items-center gap-2">
+                  <span>Age: {userProfile.age}</span>
+                </div>
+              )}
+              {userProfile.location && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  <span>{userProfile.location}</span>
+                </div>
+              )}
             </div>
           </header>
 
@@ -140,266 +183,124 @@ export default function DashboardPage() {
             </h3>
             <p className="text-slate-700 leading-relaxed text-lg">
               {userProfile.bio ||
-                `Accomplished ${userProfile.currentRole} with ${userProfile.experienceLevel.toLowerCase()} of progressive experience in technology solutions. Demonstrated expertise in modern development practices, team leadership, and delivering scalable applications that drive business growth. Passionate about innovation and committed to excellence in every project.`}
+                `Accomplished developer with ${experienceLevel} experience in technology solutions. Demonstrated expertise in modern development practices and delivering scalable applications. Passionate about innovation and committed to excellence in every project.`}
             </p>
           </section>
 
-          <section className="mb-10">
-            <h3 className="text-xl font-bold text-slate-900 mb-4 uppercase tracking-wider border-b-2 border-slate-300 pb-2">
-              Core Competencies
-            </h3>
-            <div className="grid grid-cols-4 gap-4">
-              {userProfile.skills.map((skill, index) => (
-                <div key={skill} className="text-slate-700 font-medium">
-                  • {skill}
-                </div>
-              ))}
-            </div>
-          </section>
+          {userProfile.skills && userProfile.skills.length > 0 && (
+            <section className="mb-10">
+              <h3 className="text-xl font-bold text-slate-900 mb-4 uppercase tracking-wider border-b-2 border-slate-300 pb-2">
+                Core Competencies
+              </h3>
+              <div className="grid grid-cols-4 gap-4">
+                {userProfile.skills.map((skill, index) => (
+                  <div key={index} className="text-slate-700 font-medium">
+                    • {skill}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {userProfile.projects && userProfile.projects.length > 0 && (
+            <section className="mb-10">
+              <h3 className="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider border-b-2 border-slate-300 pb-2">
+                Key Projects
+              </h3>
+              <div className="space-y-6">
+                {userProfile.projects.map((project, index) => (
+                  <div key={index}>
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="text-lg font-bold text-slate-900">{project.title}</h4>
+                      <span className="text-slate-600 font-medium">2024</span>
+                    </div>
+                    {project.technologies && (
+                      <p className="text-slate-600 text-sm mb-2 italic">{project.technologies}</p>
+                    )}
+                    <p className="text-slate-700">{project.description}</p>
+                    {project.link && (
+                      <p className="text-slate-600 text-sm mt-1">
+                        <a href={project.link} className="underline">View Project</a>
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {userProfile.achievements && userProfile.achievements.length > 0 && (
+            <section className="mb-10">
+              <h3 className="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider border-b-2 border-slate-300 pb-2">
+                Achievements
+              </h3>
+              <div className="space-y-2">
+                {userProfile.achievements.map((achievement, index) => (
+                  <div key={index} className="flex items-start">
+                    <span className="text-slate-400 mr-3 mt-2">•</span>
+                    <span className="text-slate-700">{achievement}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {userProfile.certifications && userProfile.certifications.length > 0 && (
+            <section className="mb-10">
+              <h3 className="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider border-b-2 border-slate-300 pb-2">
+                Certifications
+              </h3>
+              <div className="space-y-2">
+                {userProfile.certifications.map((cert, index) => (
+                  <div key={index} className="flex justify-between">
+                    <span className="text-slate-700">{cert}</span>
+                    <span className="text-slate-600">2024</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="mb-10">
             <h3 className="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider border-b-2 border-slate-300 pb-2">
-              Professional Experience
+              Professional Links
             </h3>
-            <div className="space-y-8">
-              <div>
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h4 className="text-lg font-bold text-slate-900">{userProfile.currentRole}</h4>
-                    <p className="text-lg text-slate-700 font-medium italic">
-                      {userProfile.company || "Current Company"}
-                    </p>
-                  </div>
-                  <div className="text-right text-slate-600">
-                    <div className="font-medium">January 2022 - Present</div>
-                    <div className="text-sm">San Francisco, CA</div>
-                  </div>
+            <div className="space-y-2">
+              {userProfile.github && (
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-600">GitHub:</span>
+                  <a href={userProfile.github} className="text-slate-700 underline">{userProfile.github}</a>
                 </div>
-                <ul className="space-y-2 text-slate-700 ml-6">
-                  <li className="flex items-start">
-                    <span className="text-slate-400 mr-3 mt-2">•</span>
-                    <span>
-                      Spearheaded development of enterprise-scale web applications serving over 100,000 active users,
-                      utilizing modern frameworks and cloud infrastructure
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-slate-400 mr-3 mt-2">•</span>
-                    <span>
-                      Led cross-functional teams of 8+ developers, designers, and product managers to deliver complex
-                      projects 20% ahead of schedule
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-slate-400 mr-3 mt-2">•</span>
-                    <span>
-                      Implemented comprehensive testing strategies and CI/CD pipelines, reducing production bugs by 40%
-                      and deployment time by 60%
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-slate-400 mr-3 mt-2">•</span>
-                    <span>
-                      Mentored 5+ junior developers through code reviews, technical guidance, and career development
-                      planning
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-slate-400 mr-3 mt-2">•</span>
-                    <span>
-                      Architected microservices infrastructure supporting 99.9% uptime and handling 10M+ API requests
-                      daily
-                    </span>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h4 className="text-lg font-bold text-slate-900">Senior Software Developer</h4>
-                    <p className="text-lg text-slate-700 font-medium italic">Tech Innovations Inc.</p>
-                  </div>
-                  <div className="text-right text-slate-600">
-                    <div className="font-medium">March 2020 - December 2021</div>
-                    <div className="text-sm">Remote</div>
-                  </div>
+              )}
+              {userProfile.linkedin && (
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-600">LinkedIn:</span>
+                  <a href={userProfile.linkedin} className="text-slate-700 underline">{userProfile.linkedin}</a>
                 </div>
-                <ul className="space-y-2 text-slate-700 ml-6">
-                  <li className="flex items-start">
-                    <span className="text-slate-400 mr-3 mt-2">•</span>
-                    <span>
-                      Developed and maintained 12+ client-facing applications using React, Node.js, and cloud services
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-slate-400 mr-3 mt-2">•</span>
-                    <span>
-                      Optimized database queries and application performance, achieving 60% improvement in load times
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-slate-400 mr-3 mt-2">•</span>
-                    <span>
-                      Collaborated in agile development environment, participating in sprint planning, code reviews, and
-                      technical discussions
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-slate-400 mr-3 mt-2">•</span>
-                    <span>
-                      Contributed to open-source projects and maintained comprehensive technical documentation
-                    </span>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h4 className="text-lg font-bold text-slate-900">Software Developer</h4>
-                    <p className="text-lg text-slate-700 font-medium italic">StartupCorp</p>
-                  </div>
-                  <div className="text-right text-slate-600">
-                    <div className="font-medium">June 2018 - February 2020</div>
-                    <div className="text-sm">San Francisco, CA</div>
-                  </div>
+              )}
+              {userProfile.website && (
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-600">Website:</span>
+                  <a href={userProfile.website} className="text-slate-700 underline">{userProfile.website}</a>
                 </div>
-                <ul className="space-y-2 text-slate-700 ml-6">
-                  <li className="flex items-start">
-                    <span className="text-slate-400 mr-3 mt-2">•</span>
-                    <span>
-                      Built responsive web applications from concept to deployment using modern JavaScript frameworks
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-slate-400 mr-3 mt-2">•</span>
-                    <span>Integrated third-party APIs and payment systems, increasing user engagement by 35%</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-slate-400 mr-3 mt-2">•</span>
-                    <span>Participated in product planning and user experience design decisions</span>
-                  </li>
-                </ul>
-              </div>
+              )}
             </div>
           </section>
 
-          <section className="mb-10">
-            <h3 className="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider border-b-2 border-slate-300 pb-2">
-              Education
-            </h3>
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="text-lg font-bold text-slate-900">Bachelor of Science in Computer Science</h4>
-                <p className="text-lg text-slate-700 font-medium italic">University of California, Berkeley</p>
-                <p className="text-slate-600 mt-1">Magna Cum Laude • GPA: 3.8/4.0</p>
-                <p className="text-slate-600">
-                  Relevant Coursework: Data Structures, Algorithms, Software Engineering, Database Systems
-                </p>
-              </div>
-              <div className="text-right text-slate-600">
-                <div className="font-medium">May 2018</div>
-                <div className="text-sm">Berkeley, CA</div>
-              </div>
-            </div>
-          </section>
-
-          <section className="mb-10">
-            <h3 className="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider border-b-2 border-slate-300 pb-2">
-              Key Projects
-            </h3>
-            <div className="space-y-6">
-              <div>
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="text-lg font-bold text-slate-900">E-Commerce Platform Redesign</h4>
-                  <span className="text-slate-600 font-medium">2023</span>
+          {userProfile.profile_completeness && (
+            <section className="bg-slate-50 p-6 rounded border">
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Profile Completeness</h3>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 bg-slate-200 rounded-full h-2">
+                  <div 
+                    className="bg-slate-800 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${userProfile.profile_completeness}%` }}
+                  ></div>
                 </div>
-                <p className="text-slate-600 text-sm mb-2 italic">React, Node.js, PostgreSQL, AWS</p>
-                <p className="text-slate-700">
-                  Led complete architectural redesign of legacy e-commerce platform, implementing modern microservices
-                  architecture. Resulted in 35% increase in conversion rates, 50% improvement in page load times, and
-                  enhanced user experience across mobile and desktop platforms.
-                </p>
+                <span className="text-slate-700 font-medium">{userProfile.profile_completeness}%</span>
               </div>
-              <div>
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="text-lg font-bold text-slate-900">Real-time Analytics Dashboard</h4>
-                  <span className="text-slate-600 font-medium">2022</span>
-                </div>
-                <p className="text-slate-600 text-sm mb-2 italic">Vue.js, Python, Redis, Docker</p>
-                <p className="text-slate-700">
-                  Architected and developed real-time analytics dashboard processing over 1 million events daily.
-                  Implemented efficient data visualization with sub-second response times and customizable reporting
-                  features for executive decision-making.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="mb-10">
-            <h3 className="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider border-b-2 border-slate-300 pb-2">
-              Certifications & Awards
-            </h3>
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-bold text-slate-900 mb-3">Professional Certifications</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-slate-700">AWS Certified Solutions Architect - Professional</span>
-                    <span className="text-slate-600">2023</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-700">Google Cloud Professional Developer</span>
-                    <span className="text-slate-600">2022</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-700">Certified Kubernetes Administrator (CKA)</span>
-                    <span className="text-slate-600">2022</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 mb-3">Recognition & Awards</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-slate-700">Employee of the Year</span>
-                    <span className="text-slate-600">2023</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-700">Innovation Award - Best Technical Solution</span>
-                    <span className="text-slate-600">2022</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-700">Dean's List - UC Berkeley</span>
-                    <span className="text-slate-600">2016-2018</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider border-b-2 border-slate-300 pb-2">
-              Professional Affiliations
-            </h3>
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <div className="space-y-2 text-slate-700">
-                  <div>• Association for Computing Machinery (ACM)</div>
-                  <div>• IEEE Computer Society</div>
-                  <div>• Women in Technology International</div>
-                </div>
-              </div>
-              <div>
-                <div className="space-y-2 text-slate-700">
-                  <div>• San Francisco Tech Meetup - Organizer</div>
-                  <div>• Open Source Contributor - GitHub</div>
-                  <div>• Tech Conference Speaker (5+ events)</div>
-                </div>
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
         </div>
       </main>
     </div>
