@@ -264,7 +264,7 @@ github_profile_analysis = {
       "description": "Salary Disparities Between Men and Women Project Overview ",
       "stars": 0,
       "primary_language": "Jupyter Notebook",
-      "url": "https://github.com/biswajitpolai/WageDisparityInsights",
+      "url": "https://github.com/biswajitpolaiWageDisparityInsights",
       "last_updated": "2024-10-25T04:15:33Z"
     }
   ],

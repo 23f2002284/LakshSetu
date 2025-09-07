@@ -49,7 +49,7 @@ class Skills(BaseModel):
     network_strength: int = Field(default=0, ge=0)
 
 class UserProfile(BaseModel):
-    id: int
+    id: Optional[int] = Field(default=None)
     email: str
     name: str
     age: Optional[int] = Field(default=None, ge=0)
@@ -59,10 +59,10 @@ class UserProfile(BaseModel):
     huggingface: Optional[str] = Field(default=None)
     x: Optional[str] = Field(default=None)
     website: Optional[str] = Field(default=None)
-    certifications: Optional[List[Certifications]] = Field(default=None)
-    skills: Optional[List[Skills]] = Field(default=None)
-    projects: List[Projects] = Field(default_factory=list)
-    blogs: Optional[List[Blogs]] = Field(default=None)
+    certifications: Optional[List[str]] = Field(default=None)
+    skills: Optional[List[str]] = Field(default=None)
+    projects: List[str] = Field(default_factory=list)
+    blogs: Optional[List[str]] = Field(default=None)
     achievements: Optional[List[str]] = Field(default=None)
     trending_skills: Optional[List[str]] = Field(default=None, description="Skills currently trending in the tech industry")
     skill_gap_analysis: Optional[dict] = Field(default=None, description="Analysis of gaps between user's skills and trending skills")

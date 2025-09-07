@@ -274,29 +274,46 @@ def User_report(github_user_output: GitHubUserOutput, linked_in_user_output: Lin
 
 
 
-from sqlalchemy import create_engine, Column, Integer, String, JSON
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy import create_engine, Column, Integer, String, JSON
+# from sqlalchemy.orm import sessionmaker
+# from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
 
-class UserDB(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    email = Column(String, unique=True)
-    profile_data = Column(JSON) # Store the full UserProfile dict here
 
-import chromadb
-from sentence_transformers import SentenceTransformer
+# # 1. First create the engine
+# SQLALCHEMY_DATABASE_URL = "sqlite:///./users.db"
+# engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+
+# # 2. Then create SessionLocal (this needs engine to exist)
+# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+# # SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Base = declarative_base()
+
+# class UserDB(Base):
+#     __tablename__ = 'users'
+#     id = Column(Integer, primary_key=True)
+#     name = Column(String)
+#     email = Column(String, unique=True)
+#     profile_data = Column(JSON) # Store the full UserProfile dict here
+
+
+# # engine = create_engine('sqlite:///users.db') 
+# Base.metadata.create_all(bind=engine)
+
+
+# import chromadb
+# from sentence_transformers import SentenceTransformer
 
 # 1. Initialize models and DB
-embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+# embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
-# Use a persistent Chroma client and reuse the same collection across runs
-_PERSIST_DIR = "./.chromadb"
-vector_db_client = chromadb.PersistentClient(path=_PERSIST_DIR)
-profiles_collection = vector_db_client.get_or_create_collection(name="user_profiles")
+# # Use a persistent Chroma client and reuse the same collection across runs
+# _PERSIST_DIR = "./.chromadb"
+# vector_db_client = chromadb.PersistentClient(path=_PERSIST_DIR)
+# profiles_collection = vector_db_client.get_or_create_collection(name="user_profiles")
 
 
 # Note: Demo code that builds a profile from hard-coded examples was removed
