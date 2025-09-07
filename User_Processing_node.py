@@ -263,6 +263,11 @@ class UserDB(Base):
     email = Column(String, unique=True)
     profile_data = Column(JSON) # Store the full UserProfile dict here
 
+
+engine = create_engine('sqlite:///users.db') 
+Base.metadata.create_all(bind=engine)
+
+
 import chromadb
 from sentence_transformers import SentenceTransformer
 
