@@ -100,7 +100,93 @@ linked_in_profile_parser = {
     "Certifications": ["Big Data Modeling and Management Systems", "Data Analytics in Python", "ABV-IIITM Credentials", "IIT BBS credentials", "Python for Data science"], 
     "Honorsawards": ["Runner\'s up at Hack For Tomorrow Grand Finale"]
 }
-linked_in_user_output = build_github_user_output_from_analysis(linked_in_profile_parser)
+
+
+def build_linkedin_profile_output_from_parser(data: dict) -> LinkedInProfileOutput:
+  """Build a LinkedInProfileOutput from a parsed dict with possible nested education and alt keys.
+
+  Accepts keys like:
+    - username, email, headline, location, skills, education (with nested {Colleges:[...], Schools:[...]})
+    - Certifications, Honorsawards (mapped to certifications, honors_and_awards)
+    - optional counts: postimpression/no_of_posts/Followers_count -> normalized to model fields
+  """
+  data = data or {}
+
+  username = data.get("username", "")
+  email = data.get("email", "")
+  headline = data.get("headline", "")
+  location = data.get("location", "")
+  connections = int(data.get("connections") or 0)
+
+  # Normalize counts with fallbacks
+  post_impressions = int(data.get("post_impressions") or data.get("postimpression") or 0)
+  post_count = int(data.get("post_count") or data.get("no_of_posts") or 0)
+  followers_count = int(data.get("followers_count") or data.get("Followers_count") or 0)
+  profile_viewers = int(data.get("profile_viewers") or 0)
+  meaningful_connections = int(data.get("meaningful_connections") or 0)
+  search_appearances = int(data.get("search_appearances") or 0)
+  profile_strength = int(data.get("profile_strength") or 0)
+
+  # Skills
+  skills = [str(s) for s in (data.get("skills") or [])]
+
+  # Flatten education
+  flat_edu: List[dict] = []
+  for entry in (data.get("education") or []):
+    if not isinstance(entry, dict):
+      continue
+    colleges = entry.get("Colleges") or entry.get("colleges") or []
+    for c in colleges:
+      if isinstance(c, dict):
+        flat_edu.append(
+          {
+            "name": c.get("name", ""),
+            "degree": c.get("degree", ""),
+            "field_of_study": c.get("field_of_study", ""),
+            "cgpa": c.get("CGPA"),
+            "start_year": c.get("start_year") or 0,
+            "end_year": c.get("end_year") or 0,
+            "education_type": "College",
+          }
+        )
+    schools = entry.get("Schools") or entry.get("schools") or []
+    for s in schools:
+      if isinstance(s, dict):
+        flat_edu.append(
+          {
+            "name": s.get("name", ""),
+            "class_name": s.get("class_name", ""),
+            "subjects_taken": s.get("subjects_taken"),
+            "marks_percentage": s.get("Marks"),
+            "start_year": s.get("start_year") or 0,
+            "end_year": s.get("end_year") or 0,
+            "education_type": "School",
+          }
+        )
+
+  certifications = data.get("certifications") or data.get("Certifications") or []
+  honors_and_awards = data.get("honors_and_awards") or data.get("Honorsawards") or []
+
+  return LinkedInProfileOutput(
+    username=username,
+    email=email,
+    headline=headline,
+    location=location,
+    connections=connections,
+    skills=skills,
+    education=flat_edu,
+    post_impressions=post_impressions,
+    post_count=post_count,
+    followers_count=followers_count,
+    profile_viewers=profile_viewers,
+    meaningful_connections=meaningful_connections,
+    search_appearances=search_appearances,
+    profile_strength=profile_strength,
+    posts=[],
+    certifications=certifications,
+    honors_and_awards=honors_and_awards,
+  )
+
 
 
 github_profile_analysis = {
@@ -189,4 +275,3 @@ github_profile_analysis = {
   "following": [],
   "contributions": []
 }
-github_user_output = build_github_user_output_from_analysis(github_profile_analysis)
