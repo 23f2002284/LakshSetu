@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from schemas import UserProfile
+from schemas import UserProfile, Certifications, Skills
 from typing import List, Optional
 
 from typing import List, Optional, Union
@@ -231,23 +231,47 @@ def build_linkedin_profile_output_from_analysis(analysis: dict) -> LinkedInProfi
     )
 
 
-from hard_coding_instead_scrap import github_user_output, linked_in_user_output
 
 def User_report(github_user_output: GitHubUserOutput, linked_in_user_output: LinkedInProfileOutput) -> UserProfile:
-    # Basic info
+    # Normalize skills (str -> Skills model)
+    normalized_skills: List[Skills] = []
+    for s in linked_in_user_output.skills or []:
+        try:
+            normalized_skills.append(Skills(skill_name=str(s), skill_strength="Unknown"))
+        except Exception:
+            # Skip any malformed entries
+            continue
+
+    # Normalize certifications (str -> Certifications model)
+    normalized_certs: List[Certifications] = []
+    for c in linked_in_user_output.certifications or []:
+        if isinstance(c, str):
+            normalized_certs.append(
+                Certifications(title=c, issuer="LinkedIn", issued_date="")
+            )
+        elif isinstance(c, dict):
+            try:
+                normalized_certs.append(Certifications(**c))
+            except Exception:
+                # Fallback minimal mapping
+                normalized_certs.append(
+                    Certifications(title=str(c.get("title") or ""), issuer=str(c.get("issuer") or ""), issued_date=str(c.get("issued_date") or ""))
+                )
+
     user_profile = UserProfile(
         id=1,  # Placeholder, should be set appropriately
         email=github_user_output.email or linked_in_user_output.email or "<Email Not Found>",
         name=github_user_output.username or linked_in_user_output.username or "<Name Not Found>",
         bio=github_user_output.bio or linked_in_user_output.headline or "<Bio Not Found>",
         location=github_user_output.location or linked_in_user_output.location or "<Location Not Found>",
-        skills=github_user_output.skills or linked_in_user_output.skills or [],
-        education=github_user_output.education or linked_in_user_output.education or [],
-        work_experience=github_user_output.work_experience or linked_in_user_output.work_experience or [],
-        achievements=github_user_output.achievements or linked_in_user_output.honors_and_awards or [],
-        certifications=github_user_output.certifications or linked_in_user_output.certifications or [],
+        skills=normalized_skills or None,
+        # education field not present in UserProfile schema; omit to avoid extra
+        work_experience=getattr(linked_in_user_output, "work_experience", []) or None,
+        achievements=linked_in_user_output.honors_and_awards or None,
+        certifications=normalized_certs or None,
     )
     return user_profile
+
 
 
 from sqlalchemy import create_engine, Column, Integer, String, JSON
@@ -273,46 +297,13 @@ from sentence_transformers import SentenceTransformer
 
 # 1. Initialize models and DB
 embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-vector_db_client = chromadb.Client()
-profiles_collection = vector_db_client.create_collection(name="user_profiles")
 
-# 2. Assume you have a user_profile object from your 'User_report' function
-# Let's say it's for user with id=1
-user_profile = User_report(github_user_output, linked_in_user_output)
+# Use a persistent Chroma client and reuse the same collection across runs
+_PERSIST_DIR = "./.chromadb"
+vector_db_client = chromadb.PersistentClient(path=_PERSIST_DIR)
+profiles_collection = vector_db_client.get_or_create_collection(name="user_profiles")
 
-# 3. Use an LLM to generate a rich summary (conceptual)
-def get_llm_summary(profile: UserProfile) -> str:
-    # In a real app, you'd call an API like OpenAI or Gemini here
-    prompt = f"""
-    Analyze the following professional profile and generate a concise, third-person professional summary.
-    Highlight their key strengths, primary domain (e.g., "Full-Stack Development," "Data Science"), 
-    and core technologies.
 
-    Name: {profile.name}
-    Bio: {profile.bio}
-    Skills: {', '.join(profile.skills)}
-    Projects: {profile.projects} 
-    ---
-    Professional Summary:
-    """
-    # This is a mock response
-    summary = (f"{profile.name} is a skilled software developer specializing in backend systems. "
-               f"They have extensive experience with Python and cloud services, demonstrated through "
-               f"numerous projects. Key strengths include API design, database management, and DevOps practices.")
-    return summary
-
-llm_summary = get_llm_summary(user_profile)
-print("LLM-Generated Summary:", llm_summary)
-
-# 4. Create the vector embedding from the summary
-embedding = embedding_model.encode(llm_summary).tolist()
-
-# 5. Store the embedding and metadata in the vector DB
-profiles_collection.add(
-    embeddings=[embedding],
-    documents=[llm_summary], # Store the text for context
-    metadatas=[{"name": user_profile.name, "email": user_profile.email}],
-    ids=[str(user_profile.id)] # Use the ID from your standard DB
-)
-
-print("\nProfile stored in vector database!")
+# Note: Demo code that builds a profile from hard-coded examples was removed
+# to avoid circular imports. Use the notebook or a separate runner script
+# to import from `hard_coded_examples` and call `User_report`.

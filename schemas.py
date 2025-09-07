@@ -14,7 +14,7 @@ class Certifications(BaseModel):
 class Projects(BaseModel):
     name: str
     description: str
-    technologies: List[str] = Field(default_factory=list)
+    technologies: Optional[List[str]] = Field(default_factory=list)
     link: Optional[str] = Field(default=None)
     interactions: Optional[str] = Field(default=None, description="e.g., 'Starred on GitHub', 'Forked on GitHub', 'Contributed via PR', views, clicks, likes")
     skills_used: Optional[List[str]] = Field(default=None)
