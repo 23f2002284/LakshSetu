@@ -1,10 +1,11 @@
 # main.py
 from typing import Union
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,Depends
 from fastapi.middleware.cors import CORSMiddleware
 from schemas import UserProfile
 import uvicorn
-from User_Processing_node import UserDB
+from table import UserDB,SessionLocal
+from sqlalchemy.orm import Session
 # Create FastAPI app
 app = FastAPI(
     title="User Registration API",
